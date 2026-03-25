@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { ChatHeader } from "@/components/ChatHeader";
 import { ChatMessage } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   id: string;
@@ -35,15 +36,15 @@ const Index = () => {
     setMessages((prev) => [...prev, userMsg]);
 
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mensagem }),
+      const { data, error } = await supabase.functions.invoke("chat", {
+        body: { mensagem },
       });
-      const data = await res.json();
+
       const aiMsg: Message = {
         id: crypto.randomUUID(),
-        text: data.resposta ?? "Erro ao processar resposta.",
+        text: error
+          ? "Desculpe chefe, houve um problema. Tente novamente."
+          : data?.resposta ?? "Erro ao processar resposta.",
         sender: "ai",
         timestamp: new Date(),
       };
