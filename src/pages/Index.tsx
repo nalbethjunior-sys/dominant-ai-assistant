@@ -25,7 +25,7 @@ const Index = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const enviarMensagem = useCallback((mensagem: string) => {
+  const enviarMensagem = useCallback(async (mensagem: string) => {
     const userMsg: Message = {
       id: crypto.randomUUID(),
       text: mensagem,
@@ -34,15 +34,29 @@ const Index = () => {
     };
     setMessages((prev) => [...prev, userMsg]);
 
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mensagem }),
+      });
+      const data = await res.json();
       const aiMsg: Message = {
         id: crypto.randomUUID(),
-        text: "Analisando... me dê um momento, chefe.",
+        text: data.resposta ?? "Erro ao processar resposta.",
         sender: "ai",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiMsg]);
-    }, 1200);
+    } catch {
+      const errMsg: Message = {
+        id: crypto.randomUUID(),
+        text: "Falha na conexão com o servidor.",
+        sender: "ai",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errMsg]);
+    }
   }, []);
 
   return (
